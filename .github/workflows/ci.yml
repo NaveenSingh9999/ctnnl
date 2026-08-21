@@ -142,8 +142,10 @@ jobs:
         run: |
           echo "## Tunnel URL" >> $GITHUB_STEP_SUMMARY
           echo "$TUNNEL_URL" >> $GITHUB_STEP_SUMMARY
-          echo "Tunnel will stay alive for 60 seconds..."
-          sleep 60
+          echo ""
+          echo "Tunnel URL: $TUNNEL_URL"
+          echo "Tunnel will stay alive for 5 minutes..."
+          sleep 300
 
       - name: Cleanup
         if: always()
