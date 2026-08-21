@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18, 20, 22]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Verify CLI loads
+        run: node bin/cloudtunnel.js --help
+
+      - name: Verify CLI version
+        run: node bin/cloudtunnel.js --version
+
+  build:
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Verify all commands parse
+        run: |
+          node bin/cloudtunnel.js expose --help
+          node bin/cloudtunnel.js quick --help
+          node bin/cloudtunnel.js dashboard --help
+          node bin/cloudtunnel.js list --help
+          node bin/cloudtunnel.js stop --help
+          node bin/cloudtunnel.js setup --help
