@@ -56,3 +56,90 @@ jobs:
           node bin/cloudtunnel.js list --help
           node bin/cloudtunnel.js stop --help
           node bin/cloudtunnel.js setup --help
+
+  integration:
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install cloudflared
+        run: |
+          curl -sL https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o /usr/local/bin/cloudflared
+          chmod +x /usr/local/bin/cloudflared
+          cloudflared --version
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Start temp HTTP server
+        run: |
+          node -e "
+          const http = require('http');
+          const server = http.createServer((req, res) => {
+            res.writeHead(200, {'Content-Type': 'text/html'});
+            res.end('<html><body><h1>CloudTunnel CI Test</h1><p>This page was served through a Cloudflare Tunnel.</p></body></html>');
+          });
+          server.listen(8787, () => console.log('Server running on port 8787'));
+          process.on('SIGTERM', () => server.close());
+          " &
+          echo "Waiting for server to start..."
+          sleep 2
+          curl -s http://localhost:8787 | grep -q "CloudTunnel CI Test" && echo "Local server OK" || (echo "Local server failed" && exit 1)
+
+      - name: Expose server via cloudflared tunnel
+        run: |
+          # Start cloudflared in background, capture URL
+          cloudflared tunnel --url http://localhost:8787 --no-autoupdate 2>&1 | tee /tmp/cf.log &
+          CF_PID=$!
+          echo "CF_PID=$CF_PID" >> $GITHUB_ENV
+          
+          # Wait for tunnel URL (max 30s)
+          for i in $(seq 1 30); do
+            URL=$(grep -oP 'https://[a-z0-9-]+\.trycloudflare\.com' /tmp/cf.log | head -1)
+            if [ -n "$URL" ]; then
+              echo "TUNNEL_URL=$URL" >> $GITHUB_ENV
+              echo "Tunnel URL: $URL"
+              break
+            fi
+            sleep 1
+          done
+          
+          if [ -z "$URL" ]; then
+            echo "Failed to get tunnel URL"
+            cat /tmp/cf.log
+            exit 1
+          fi
+
+      - name: Verify exposed page is accessible
+        run: |
+          echo "Testing URL: $TUNNEL_URL"
+          
+          # Try up to 10 times (tunnel may need a moment)
+          for i in $(seq 1 10); do
+            RESPONSE=$(curl -s --max-time 10 "$TUNNEL_URL" 2>&1)
+            if echo "$RESPONSE" | grep -q "CloudTunnel CI Test"; then
+              echo "SUCCESS: Exposed page is accessible!"
+              echo "Response: $RESPONSE"
+              exit 0
+            fi
+            echo "Attempt $i: waiting..."
+            sleep 3
+          done
+          
+          echo "FAILED: Could not access exposed page"
+          echo "Last response: $RESPONSE"
+          exit 1
+
+      - name: Cleanup
+        if: always()
+        run: |
+          kill $CF_PID 2>/dev/null || true
+          pkill cloudflared 2>/dev/null || true
