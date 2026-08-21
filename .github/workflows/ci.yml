@@ -138,6 +138,13 @@ jobs:
           echo "Last response: $RESPONSE"
           exit 1
 
+      - name: Print tunnel URL for external testing
+        run: |
+          echo "## Tunnel URL" >> $GITHUB_STEP_SUMMARY
+          echo "$TUNNEL_URL" >> $GITHUB_STEP_SUMMARY
+          echo "Tunnel will stay alive for 60 seconds..."
+          sleep 60
+
       - name: Cleanup
         if: always()
         run: |
