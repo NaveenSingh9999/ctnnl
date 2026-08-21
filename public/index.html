@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CloudTunnel — Dashboard</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>CloudTunnel</h1>
+      <p class="subtitle">Expose local services to the internet</p>
+    </header>
+
+    <section class="create-form">
+      <h2>New Tunnel</h2>
+      <div class="form-row">
+        <input type="number" id="port" placeholder="Port" value="8080" min="1" max="65535">
+        <input type="text" id="name" placeholder="Name (optional)">
+        <input type="text" id="subdomain" placeholder="Subdomain (optional)">
+        <button id="create-btn" class="btn btn-primary">Create Tunnel</button>
+      </div>
+    </section>
+
+    <section class="tunnels-section">
+      <h2>Active Tunnels</h2>
+      <div id="tunnels-list" class="tunnels-list">
+        <p class="empty-state">No active tunnels. Create one above.</p>
+      </div>
+    </section>
+
+    <section class="logs-section">
+      <h2>Logs</h2>
+      <div id="logs" class="logs"></div>
+    </section>
+  </div>
+
+  <script src="/js/app.js"></script>
+</body>
+</html>

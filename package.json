@@ -1,0 +1,26 @@
+{
+  "name": "cloudtunnel",
+  "version": "1.0.0",
+  "description": "Expose local services to the internet using Cloudflare Tunnel - zero config, no account needed",
+  "type": "module",
+  "bin": {
+    "cloudtunnel": "./bin/cloudtunnel.js",
+    "ct": "./bin/cloudtunnel.js"
+  },
+  "scripts": {
+    "start": "node bin/cloudtunnel.js dashboard",
+    "dev": "node bin/cloudtunnel.js dashboard --port 3000"
+  },
+  "dependencies": {
+    "commander": "^13.1.0",
+    "express": "^5.1.0",
+    "socket.io": "^4.8.0",
+    "chalk": "^5.4.0",
+    "ora": "^8.2.0",
+    "inquirer": "^12.6.0",
+    "open": "^10.1.0",
+    "uuid": "^11.1.0"
+  },
+  "keywords": ["cloudflare", "tunnel", "ngrok", "expose", "local", "internet"],
+  "license": "MIT"
+}
